@@ -26,27 +26,27 @@ public class TestMMoMemory : MonoBehaviour
         //JobDBModel.Instance.GetByName();//拓展
 
 
-        //NetWorkSocket.Instance.Content("192.168.0.111", 1011);
+        NetWorkSocket.Instance.Content("192.168.0.111", 1011);
     }
 
     // Update is called once per frame
     void Update()
     {
-        //if (Input.GetKeyDown(KeyCode.A))
-        //{
-        //    Send("你好A");
-        //}
-        //if (Input.GetKeyDown(KeyCode.S))
-        //{
-        //    Send("你好S");
-        //}
-        //if (Input.GetKeyDown(KeyCode.D))
-        //{
-        //    for (int i = 0; i < 10; i++)
-        //    {
-        //        Send("你好循环" + i);
-        //    }
-        //}
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            Send("你好A");
+        }
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            Send("你好S");
+        }
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                Send("你好循环" + i);
+            }
+        }
     }
     private void Send(string msg)
     {

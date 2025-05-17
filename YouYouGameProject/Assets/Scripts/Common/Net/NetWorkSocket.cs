@@ -25,7 +25,7 @@ public class NetWorkSocket : MonoBehaviour
     }
     #endregion
 
-    //private byte[] buffer = new byte[1024];
+    //private byte[] buffer = new byte[10240];
     /// <summary>
     /// ������Ϣ����
     /// </summary>
@@ -73,6 +73,7 @@ public class NetWorkSocket : MonoBehaviour
         {
             if (m_ReceiveCount <= 5)
             {
+                m_ReceiveCount++;
                 lock (m_ReceiveQueue)
                 {
                     if (m_ReceiveQueue.Count > 0)
@@ -134,7 +135,7 @@ public class NetWorkSocket : MonoBehaviour
         {
             m_Client.Connect(new IPEndPoint(IPAddress.Parse(ip), port));
             m_CheckSendueue = OnCheckSendQueueCallBack;
-            ReceiveMgr();
+            ReceiveMsg();
             Debug.Log("���ӳɹ�");
         }
         catch (Exception ex)
@@ -231,7 +232,8 @@ public class NetWorkSocket : MonoBehaviour
     /// <summary>
     /// 接收数据
     /// </summary>
-    private void ReceiveMgr()
+
+    private void ReceiveMsg()
     {
         //异步接收数据
         m_Client.BeginReceive(m_ReceiveBuffer, 0, m_ReceiveBuffer.Length, SocketFlags.None, ReceiveCallBack, m_Client);
@@ -320,6 +322,7 @@ public class NetWorkSocket : MonoBehaviour
                     }
                 }
                 //进行下一次接收数据包
+                ReceiveMsg();
             }
             else
             {
