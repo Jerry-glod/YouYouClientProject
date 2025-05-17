@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Root>
+	<AssetBundle>
+		<Item Name="Role_Player" Tag="Role" Version="1" Size="0" ToPath="/Role/">
+			
+			<Path Value="Resources\Player\Role_Player.prefab"/>
+		</Item>
+	</AssetBundle>
+</Root>
