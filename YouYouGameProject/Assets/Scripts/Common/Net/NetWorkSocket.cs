@@ -8,7 +8,7 @@ using UnityEngine;
 
 public class NetWorkSocket : MonoBehaviour
 {
-    #region ����
+    #region 单例模式
     private static NetWorkSocket instance;
     public static NetWorkSocket Instance
     {
@@ -27,15 +27,15 @@ public class NetWorkSocket : MonoBehaviour
 
     //private byte[] buffer = new byte[10240];
     /// <summary>
-    /// ������Ϣ����
+    /// 发送消息队列
     /// </summary>
     private Queue<byte[]> m_SendQueue = new Queue<byte[]>();
     /// <summary>
-    /// �����е�ί��
+    /// 检查队列的委托
     /// </summary>
     private Action m_CheckSendueue;
     /// <summary>
-    /// �ͻ���Socket
+    /// Socket
     /// </summary>
     private Socket m_Client;
 
@@ -79,16 +79,25 @@ public class NetWorkSocket : MonoBehaviour
                     if (m_ReceiveQueue.Count > 0)
                     {
                         byte[] buffer = m_ReceiveQueue.Dequeue();
+
+                        ushort protoCode = 0;
+                        byte[] protoContent = new byte[buffer.Length];
                         using (MMO_MemoryStream ms = new MMO_MemoryStream())
                         {
-                            string msg = ms.ReadUTF8String();
-                            Debug.Log(msg);
+                            //string msg = ms.ReadUTF8String();
+                            //Debug.Log(msg);
+
+                            //协议编号
+                            protoCode = ms.ReadUShort();
+                            ms.Read(protoContent, 0, protoContent.Length);
+
+                            GlobalInit.Instance.OnReceiveProto(protoCode, protoContent);
                         }
-                        using (MMO_MemoryStream ms = new MMO_MemoryStream())
-                        {
-                            ms.WriteUTF8String("客户端时间" + DateTime.Now.ToString());
-                            this.SendMsg(ms.ToArray());
-                        }
+                        //using (MMO_MemoryStream ms = new MMO_MemoryStream())
+                        //{
+                        //    ms.WriteUTF8String("客户端时间" + DateTime.Now.ToString());
+                        //    this.SendMsg(ms.ToArray());
+                        //}
                     }
                     else
                     {
@@ -116,15 +125,15 @@ public class NetWorkSocket : MonoBehaviour
             m_Client.Close();
         }
     }
-    #region Content ���ӵ�socket������
+    #region Connect 连接到socket服务器
     /// <summary>
-    /// ���ӵ�socket������
+    /// 连接到socket服务器
     /// </summary>
     /// <param name="ip">ip</param>
-    /// <param name="port">�˿�</param>
+    /// <param name="port">端口号</param>
     public void Content(string ip, int port)
     {
-        ///���socket �Ѿ����ڣ����Ҵ���������״̬����ֱ��return
+        //如果socket已经存在 并且处于连接中状态 则直接返回
         if (m_Client != null && m_Client.Connected)
         {
             return;
@@ -136,37 +145,37 @@ public class NetWorkSocket : MonoBehaviour
             m_Client.Connect(new IPEndPoint(IPAddress.Parse(ip), port));
             m_CheckSendueue = OnCheckSendQueueCallBack;
             ReceiveMsg();
-            Debug.Log("���ӳɹ�");
+            Debug.Log("连接成功");
         }
         catch (Exception ex)
         {
 
-            Debug.Log("����ʧ��=" + ex.Message);
+            Debug.Log("连接失败" + ex.Message);
         }
     }
     #endregion
 
-    #region OnCheckSendQueueCallBack �����е�ί�лص�
+    #region OnCheckSendQueueCallBack 检查队列的委托回调
     /// <summary>
-    /// �����е�ί�лص�
+    /// 检查队列的委托回调
     /// </summary>
     private void OnCheckSendQueueCallBack()
     {
         lock (m_SendQueue)
         {
-            //��������������ݰ� �������ݰ�
+            //如果队列中有数据包 则发送数据包
             if (m_SendQueue.Count > 0)
             {
-                //�������ݰ�
+                //发送数据包
                 Send(m_SendQueue.Dequeue());
             }
         }
     }
     #endregion
 
-    #region ��װ���ݰ�
+    #region 封装数据包
     /// <summary>
-    /// ��װ���ݰ�
+    /// 封装数据包
     /// </summary>
     /// <param name="data"></param>
     /// <returns></returns>
@@ -184,28 +193,28 @@ public class NetWorkSocket : MonoBehaviour
     }
     #endregion
 
-    #region SendMsg ������Ϣ ����Ϣ���뵽����
+    #region SendMsg 发送消息 把消息加入到队列
     /// <summary>
-    /// ������Ϣ
+    ///发送消息 把消息加入到队列
     /// </summary>
     /// <param name="buffer"></param>
     public void SendMsg(byte[] buffer)
     {
-        //�õ���װ������ݰ�
+        //得到封装后的数据包
         byte[] sendBuffer = MakeBuffer(buffer);
         lock (m_SendQueue)
         {
-            ///�����ݰ��������
+            ///把数据包加入队列
             m_SendQueue.Enqueue(sendBuffer);
-            ///���ί�� (ִ��ί��)
+            ///启动委托 (执行委托)
             m_CheckSendueue.BeginInvoke(null, null);
         }
     }
     #endregion
 
-    #region Send �����������ݰ���������
+    #region Send 真正发送数据包到服务器
     /// <summary>
-    /// �����������ݰ���������
+    /// 真正发送数据包到服务器
     /// </summary>
     /// <param name="buffer"></param>
     private void Send(byte[] buffer)
@@ -214,15 +223,15 @@ public class NetWorkSocket : MonoBehaviour
     }
     #endregion
 
-    #region SendCallBack �������ݰ��Ļص�
+    #region SendCallBack 发送数据包的回调
     /// <summary>
-    /// �������ݰ��Ļص�
+    /// 发送数据包的回调
     /// </summary>
     /// <param name="ar"></param>
     private void SendCallBack(IAsyncResult ar)
     {
         m_Client.EndSend(ar);
-        //����������
+        //继续检查队列
         OnCheckSendQueueCallBack();
     }
     #endregion
